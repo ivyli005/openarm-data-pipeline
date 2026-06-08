@@ -36,11 +36,14 @@ Multi-threaded pipeline reading joint states from both arms at 250Hz, matching t
 **Verified running at ~220Hz with correct joint values:**
 
 [t=1780950268.791]
+
 right qpos:    [ 3.174  2.442  1.492  0.409 -0.711 -1.767 -2.666 -3.326]
+
 right qvel:    [-1.22  -1.725 -0.462 -0.4   -1.487 -1.326 -1.062 -0.696]
+
 right qtorque: [ 0.435  0.356  0.089  0.021 -0.012 -0.046 -0.081 -0.085]
 
-**Real Damiao MIT feedback frame format** — sourced from official Damiao DM4310 datasheet https://damiao.enactic.ai/en/products/hardware/dm-j4310-2ec-v1.1. Format is identical across all Damiao motor models:
+**Damiao MIT feedback frame format** — sourced from official Damiao DM4310 datasheet https://damiao.enactic.ai/en/products/hardware/dm-j4310-2ec-v1.1. Format is identical across all Damiao motor models:
 
 | Byte | Content |
 |---|---|
