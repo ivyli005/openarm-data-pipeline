@@ -43,14 +43,14 @@ from can_reader.joint_state import ArmState, JointState
 # Scaling from DM_CAN.py Limit_Param (github.com/cmjang/DM_Control_Python)
 # Motor layout inferred from docs.openarm.dev motor diagram
 MOTOR_RECV_IDS = {
-    0x11: {"name": "joint1",  "index": 0, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 54},  # DM8009P
-    0x12: {"name": "joint2",  "index": 1, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 54},  # DM8009P
-    0x13: {"name": "joint3",  "index": 2, "Q_MAX": 12.5, "DQ_MAX": 10, "TAU_MAX": 28},  # DM4340P
-    0x14: {"name": "joint4",  "index": 3, "Q_MAX": 12.5, "DQ_MAX": 8,  "TAU_MAX": 28},  # DM4340
-    0x15: {"name": "joint5",  "index": 4, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
-    0x16: {"name": "joint6",  "index": 5, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
-    0x17: {"name": "joint7",  "index": 6, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
-    0x18: {"name": "gripper", "index": 7, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
+    0x11: {"name": "joint1",  "index": 0, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 40},  # DM8009P — 40Nm peak (datasheet)
+    0x12: {"name": "joint2",  "index": 1, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 40},  # DM8009P
+    0x13: {"name": "joint3",  "index": 2, "Q_MAX": 12.5, "DQ_MAX": 10, "TAU_MAX": 27},  # DM4340P — 27Nm peak (datasheet)
+    0x14: {"name": "joint4",  "index": 3, "Q_MAX": 12.5, "DQ_MAX": 8,  "TAU_MAX": 27},  # DM4340
+    0x15: {"name": "joint5",  "index": 4, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310 — 7Nm peak (datasheet)
+    0x16: {"name": "joint6",  "index": 5, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310
+    0x17: {"name": "joint7",  "index": 6, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310
+    0x18: {"name": "gripper", "index": 7, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310
 }
 
 NUM_MOTORS = 8  # joint1-7 + gripper

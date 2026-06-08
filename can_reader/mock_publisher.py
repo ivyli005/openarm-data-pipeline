@@ -50,14 +50,14 @@ import numpy as np
 # 1x DM4340P, 1x DM4340, 4x DM4310 wrist/gripper)
 # Scaling from DM_CAN.py Limit_Param (github.com/cmjang/DM_Control_Python)
 MOTORS = [
-    {"name": "joint1",  "slave": 0x01, "recv": 0x11, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 54},  # DM8009P
-    {"name": "joint2",  "slave": 0x02, "recv": 0x12, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 54},  # DM8009P
-    {"name": "joint3",  "slave": 0x03, "recv": 0x13, "Q_MAX": 12.5, "DQ_MAX": 10, "TAU_MAX": 28},  # DM4340P
-    {"name": "joint4",  "slave": 0x04, "recv": 0x14, "Q_MAX": 12.5, "DQ_MAX": 8,  "TAU_MAX": 28},  # DM4340
-    {"name": "joint5",  "slave": 0x05, "recv": 0x15, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
-    {"name": "joint6",  "slave": 0x06, "recv": 0x16, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
-    {"name": "joint7",  "slave": 0x07, "recv": 0x17, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
-    {"name": "gripper", "slave": 0x08, "recv": 0x18, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 10},  # DM4310
+    {"name": "joint1",  "slave": 0x01, "recv": 0x11, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 40},  # DM8009P — 40Nm peak (datasheet)
+    {"name": "joint2",  "slave": 0x02, "recv": 0x12, "Q_MAX": 12.5, "DQ_MAX": 45, "TAU_MAX": 40},  # DM8009P
+    {"name": "joint3",  "slave": 0x03, "recv": 0x13, "Q_MAX": 12.5, "DQ_MAX": 10, "TAU_MAX": 27},  # DM4340P — 27Nm peak (datasheet)
+    {"name": "joint4",  "slave": 0x04, "recv": 0x14, "Q_MAX": 12.5, "DQ_MAX": 8,  "TAU_MAX": 27},  # DM4340
+    {"name": "joint5",  "slave": 0x05, "recv": 0x15, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310 — 7Nm peak (datasheet)
+    {"name": "joint6",  "slave": 0x06, "recv": 0x16, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310
+    {"name": "joint7",  "slave": 0x07, "recv": 0x17, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310
+    {"name": "gripper", "slave": 0x08, "recv": 0x18, "Q_MAX": 12.5, "DQ_MAX": 30, "TAU_MAX": 7},   # DM4310
 ]
 
 # 250Hz per OpenArm dataset spec (frequencies.action.arms = 250.0)

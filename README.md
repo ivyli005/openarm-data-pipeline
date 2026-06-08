@@ -33,24 +33,25 @@ Multi-threaded pipeline reading joint states from both arms at 250Hz.
 - `CANReader` — two threads (one per interface) parse frames and assemble JointStates
 - Output: `arms/right/qpos`, `arms/right/qvel`, `arms/right/qtorque` (and left) — shape (8,) float32
 
-**Real Damiao MIT frame format** (sourced from official datasheet + DM_CAN.py):
-- Position: 16-bit, ±12.5 rad
+**Damiao MIT frame format** (sourced from official Damiao datasheets at https://damiao.enactic.ai/en/products/hardware/dm-j4310-2ec-v1.1):
+- Position: 16-bit, ±12.5 rad (same across all motor models)
 - Velocity: 12-bit, per motor type
 - Torque: 12-bit, per motor type
 
-**Per-joint motor types** (from docs.openarm.dev hardware diagram):
+**Per-joint motor types** (layout inferred from hardware diagram at docs.openarm.dev, TAU_MAX from official datasheets):
 
-| Joints | Motor | TAU_MAX |
-|---|---|---|
-| joint1-2 | DM8009P | 54 Nm |
-| joint3 | DM4340P | 28 Nm |
-| joint4 | DM4340 | 28 Nm |
-| joint5-7 + gripper | DM4310 | 10 Nm |
+| Joints | Motor | DQ_MAX | TAU_MAX (datasheet peak) |
+|---|---|---|---|
+| joint1-2 | DM8009P (shoulder) | 45 rad/s | 40 Nm |
+| joint3 | DM4340P | 10 rad/s | 27 Nm |
+| joint4 | DM4340 | 8 rad/s | 27 Nm |
+| joint5-7 + gripper | DM4310 (wrist) | 30 rad/s | 7 Nm |
+
 
 **Limitations:**
 - Software timestamps (`time.time()`) — real hardware uses kernel `SO_TIMESTAMPING`
 - vcan doesn't support CAN FD (tried but failed) — mock uses standard CAN frames (8 bytes fits fine)
-- Mock rate: ~218Hz vs target 250Hz (Python/VM overhead), would not be an issue for real hardware. 
+- Mock rate: ~220Hz vs target 250Hz (Python/VM overhead), would not be an issue for real hardware. 
 - Per-joint motor mapping inferred from hardware diagram https://docs.openarm.dev/hardware/openarm-2.0/motor — not officially documented
 
 ---
