@@ -18,7 +18,7 @@ openarm-can-cli -i can0 set_zero --arm # set zero position right arm
 openarm-can-cli -i can1 set_zero --arm # set zero position left arm
 ```
 
-**Limitations:** `openarm-can-cli` requires a physical CAN adapter and OpenArm hardware. Zero position calibration cannot be executed without the arm. vcan interfaces do not support CAN FD bitrate configuration — this is a kernel-level hardware feature only available with a real CAN adapter.
+**Limitations:** `openarm-can-cli` requires a physical CAN adapter and OpenArm hardware. Zero position calibration cannot be executed without the arm.
 
 ---
 
@@ -34,12 +34,13 @@ Multi-threaded pipeline reading joint states from both arms at 250Hz, matching t
 - Output: `arms/right/qpos`, `arms/right/qvel`, `arms/right/qtorque` (and left) — shape (8,) float32, matching real OpenArm dataset format
 
 **Verified running at ~220Hz with correct joint values:**
+
 [t=1780950268.791]
 right qpos:    [ 3.174  2.442  1.492  0.409 -0.711 -1.767 -2.666 -3.326]
 right qvel:    [-1.22  -1.725 -0.462 -0.4   -1.487 -1.326 -1.062 -0.696]
 right qtorque: [ 0.435  0.356  0.089  0.021 -0.012 -0.046 -0.081 -0.085]
 
-**Real Damiao MIT feedback frame format** — sourced from official Damiao DM4310 datasheet and verified against DM_CAN.py (github.com/cmjang/DM_Control_Python). Format is identical across all Damiao motor models:
+**Real Damiao MIT feedback frame format** — sourced from official Damiao DM4310 datasheet https://damiao.enactic.ai/en/products/hardware/dm-j4310-2ec-v1.1. Format is identical across all Damiao motor models:
 
 | Byte | Content |
 |---|---|
@@ -50,7 +51,7 @@ right qtorque: [ 0.435  0.356  0.089  0.021 -0.012 -0.046 -0.081 -0.085]
 | D[6] | T_MOS — MOSFET temperature |
 | D[7] | T_Rotor — rotor temperature |
 
-**Per-joint motor configuration** — layout from hardware diagram at docs.openarm.dev/hardware/openarm-2.0/motor, TAU_MAX from official Damiao datasheets:
+**Per-joint motor configuration** — layout from hardware diagram at docs.openarm.dev/hardware/openarm-2.0/motor , TAU_MAX from official Damiao datasheets:
 
 | Joints | Motor | DQ_MAX | TAU_MAX |
 |---|---|---|---|
@@ -62,10 +63,10 @@ right qtorque: [ 0.435  0.356  0.089  0.021 -0.012 -0.046 -0.081 -0.085]
 **CAN IDs** sourced from openarm_can demo.cpp (github.com/enactic/openarm_can): feedback IDs 0x11–0x18, right arm on can0/vcan0, left arm on can1/vcan1.
 
 **Limitations:**
-- **Timestamps:** Uses `time.time()` (software). Real hardware requires Linux kernel `SO_TIMESTAMPING` for hardware-level frame timestamps — important for precise sync in robot learning datasets
-- **CAN FD:** vcan is a software loopback and does not implement the CAN FD physical layer. Mock uses standard CAN (`is_fd=False`). This is fine since the Damiao feedback frame is exactly 8 bytes — within standard CAN limits. Real hardware uses CAN FD at 5Mbps via openarm-can-cli
-- **Mock rate:** ~220Hz vs target 250Hz due to Python threading overhead in VM. Not an issue on real hardware — the C++ openarm_can library uses hardware-timed motor broadcasts at exactly 250Hz
-- **Motor mapping:** Exact joint-to-motor assignment not officially documented by Enactic — inferred from hardware diagram
+- Software timestamps (time.time()) — real hardware uses kernel SO_TIMESTAMPING
+- vcan doesn't support CAN FD (tried but failed) — mock uses standard CAN frames (8 bytes fits fine)
+- Mock rate: ~220Hz vs target 250Hz (Python/VM overhead), would not be an issue for real hardware. 
+- Per-joint motor mapping inferred from hardware diagram https://docs.openarm.dev/hardware/openarm-2.0/motor — not officially documented
 
 ---
 
