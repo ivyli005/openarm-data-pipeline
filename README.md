@@ -107,13 +107,9 @@ CAN IDs sourced from [openarm_can demo.cpp](https://github.com/enactic/openarm_c
 - `CameraSynchronizer` — nearest-frame matching with ±50ms staleness bound; emits one `SyncedFrameSet` per tick when all 4 cameras are within bound
 - Frame timestamps use `time.time_ns()` at capture time (not queue-put time), matching the real `{ns}.jpeg` filename format from the Dataset API
 
-**Sync strategy:**
+**Sync strategy:** On each tick, drain each camera queue to get the freshest frame. Accept the set if all 4 timestamps are within 50ms of each other — same approach as ROS `ApproximateTimeSynchronizer`. A hardware GPIO sync trigger would tighten this to ~5ms.
 
-On each tick, drain each camera queue to get the freshest frame. Accept the set if all 4 timestamps are within 50ms of each other — the same approach as ROS `ApproximateTimeSynchronizer`. The 50ms bound (~1.5 frame periods at 30Hz) is a design choice; a hardware GPIO sync trigger would tighten this to ~5ms.
-
-**Alignment with joint state data:**
-
-No explicit CAN↔camera alignment logic is needed during recording. Both pipelines use `time.time()` on the same host. The Dataset API `Sampler` handles alignment at read time via `np.searchsorted` — it picks the camera frame with the smallest timestamp `>=` the sample timestamp. Maximum misalignment is one frame period (~33ms).
+**Alignment with joint state data:** No explicit alignment logic needed during recording — both pipelines use `time.time()` on the same host. The Dataset API `Sampler` aligns at read time via `np.searchsorted`. Maximum misalignment is one frame period (~33ms).
 
 **Verified output:**
 
@@ -126,12 +122,10 @@ No explicit CAN↔camera alignment logic is needed during recording. Both pipeli
 [CAM] Sync stats: ticks=120  dropped=0  drop_rate=0.0%  frames_drained=40
 ```
 
-**Limitations / real hardware notes:**
-- **ZED clock drift** — ZED SDK timestamps frames via `zed.get_timestamp(sl.TIME_REFERENCE.IMAGE)` using a device-internal clock that drifts from wall clock. Fix: average `time.time() - zed.get_timestamp(TIME_REFERENCE.CURRENT)` over 100 samples at startup and apply as a fixed offset. Sufficient for 30s episodes. Not implemented in mock — all cameras share `time.time_ns()`.
-- **No hardware sync trigger** — cameras free-run independently with ±2ms simulated USB jitter. A GPIO trigger on real hardware reduces this to ~0.1ms.
-- **VM jitter artificially low** — measured 3.2–3.4ms inter-camera spread. Real USB cameras typically show 5–15ms; the ±50ms bound handles this comfortably.
-- **Arducam serial numbers** — real setup requires `ArducamUvcConfigUpdateTool` to assign `CELL1_CAM_RIGHT`, `CELL1_CAM_LEFT`, `CELL1_CAM_CEILING` and udev rules to create stable `/dev/camera_*` symlinks. See [docs.openarm.dev/setup](https://docs.openarm.dev/setup).
-
+**Limitations:**
+- **ZED clock drift** — ZED uses a device-internal clock that drifts from wall clock. Fix: measure offset at startup and apply to all ZED timestamps. Not implemented in mock — all cameras share `time.time_ns()`.
+- **No hardware sync trigger** — cameras free-run with ±2ms simulated USB jitter. GPIO trigger reduces this to ~0.1ms on real hardware.
+- **Arducam serial numbers** — real setup requires `ArducamUvcConfigUpdateTool` and udev rules for stable `/dev/camera_*` symlinks. See [docs.openarm.dev/setup](https://docs.openarm.dev/setup).
 
 ---
 
@@ -147,7 +141,7 @@ Chose the native OpenArm format over HDF5, zarr, or MCAP because the [Dataset AP
 
 **Why not HDF5?** Common in robot learning but not what OpenArm uses. Would require a conversion step before training.
 
-**Why not MCAP?** Good for replay/debugging (used by Foxglove) but not the OpenArm format. Worth considering for a separate replay tool.
+**Why not MCAP?** Good for replay/debugging but not the OpenArm format. Worth considering for a separate replay tool.
 
 On-disk layout per episode:
 
@@ -173,7 +167,7 @@ The JPEG filenames are nanosecond timestamps (`time.time_ns()`). The Dataset API
 
 **Atomic writes** — camera frames are written to disk one by one during recording (not buffered in memory). Writing all frames at stop time caused the VM to run out of memory (~1GB of raw numpy arrays for a 30s episode). Writing JPEGs live during recording keeps memory flat. Joint states are still buffered (tiny — just float32 arrays). On stop, only two small parquet files need to be written.
 
-### REST API
+### How to Run: REST API
 
 Built with FastAPI. Auto-generated interactive docs at `http://localhost:8000/docs`.
 
@@ -188,63 +182,22 @@ Built with FastAPI. Auto-generated interactive docs at `http://localhost:8000/do
 
 The download endpoint streams the `.tar.gz` in 64KB chunks rather than loading the whole episode into memory — a 30s episode with 4 cameras is ~50MB+.
 
-### How to run
-
-```bash
-python3 main.py
-```
-
-Open `http://localhost:8000/docs` in your browser. All endpoints are interactive there.
-
-Or use curl in a second terminal:
-
-```bash
-curl -X POST http://localhost:8000/episodes/start
-sleep 5
-curl -X POST http://localhost:8000/episodes/stop
-curl http://localhost:8000/episodes
-```
-
-### Where to see the results
-
-**API response** — the `/episodes/stop` call returns immediately with episode stats:
-```json
-{
-  "id": 0,
-  "duration_s": 28.91,
-  "joint_states": 6249,
-  "frame_counts": {"wrist_left": 870, "wrist_right": 870, "ceiling": 870, "head": 870}
-}
-```
-
-**Files on disk** — in VSCode file explorer, open the `data/` folder:
-- Click any `.jpeg` file to preview a camera frame
-- Run `python3 -c "import pandas as pd; print(pd.read_parquet('data/episodes/0/obs/state.parquet').head())"` to inspect joint states
-
-**Terminal** — shows write progress:
-```
-[Recorder] Started episode 0
-[Recorder] Writing parquet for episode 0...
-[Recorder] Episode 0 done — 6249 joint states, 28.91s
-```
-
 ### Verified output
 
-```
-POST /episodes/start → {"recording": true, "episode_id": 0}
-POST /episodes/stop  → {"id": 0, "duration_s": 28.91, "joint_states": 6249,
-                        "frame_counts": {"wrist_left": 870, "wrist_right": 870,
-                        "ceiling": 870, "head": 870}}
-GET  /episodes       → same as above, queryable anytime
+```bash
+# Run in two terminals
+python3 main.py
+curl -X POST http://localhost:8000/episodes/start && sleep 5 && curl -X POST http://localhost:8000/episodes/stop
 ```
 
+```json
+{"id": 0, "duration_s": 28.91, "joint_states": 6249,
+ "frame_counts": {"wrist_left": 870, "wrist_right": 870, "ceiling": 870, "head": 870}}
+```
+
+Recorded files land in `data/episodes/0/` — JPEG frames visible in VSCode file explorer, parquet readable via pandas. Interactive API docs at `http://localhost:8000/docs`.
 
 ---
-
-## Task 5: Monitoring Dashboard
-
-*Coming soon*
-
 
 ## Given More Time / Real Hardware
 
