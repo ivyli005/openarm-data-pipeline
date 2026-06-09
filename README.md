@@ -29,7 +29,7 @@ Open `http://localhost:8000/docs` in your browser. Use **POST /episodes/start** 
 
 Configured virtual CAN interfaces `vcan0` and `vcan1` on Ubuntu 22.04 LTS (ARM64 VM in UTM on Apple Silicon Mac). A Linux VM is required — SocketCAN is a Linux kernel feature, macOS has no native CAN support.
 
-Both interfaces confirmed UP via `ip link show` — see `docs/screenshots/task1_vcan_up.png`.
+Both interfaces confirmed UP via `ip link show` — see `docs/screenshots/Task1.png`.
 
 **Real hardware sequence** (from [docs.openarm.dev/setup](https://docs.openarm.dev/setup)):
 
