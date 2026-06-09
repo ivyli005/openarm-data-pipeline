@@ -167,7 +167,7 @@ The JPEG filenames are nanosecond timestamps (`time.time_ns()`). The Dataset API
 
 **Atomic writes** — camera frames are written to disk one by one during recording (not buffered in memory). Writing all frames at stop time caused the VM to run out of memory (~1GB of raw numpy arrays for a 30s episode). Writing JPEGs live during recording keeps memory flat. Joint states are still buffered (tiny — just float32 arrays). On stop, only two small parquet files need to be written.
 
-### How to Run: REST API
+### REST API
 
 Built with FastAPI. Auto-generated interactive docs at `http://localhost:8000/docs`.
 
@@ -182,20 +182,56 @@ Built with FastAPI. Auto-generated interactive docs at `http://localhost:8000/do
 
 The download endpoint streams the `.tar.gz` in 64KB chunks rather than loading the whole episode into memory — a 30s episode with 4 cameras is ~50MB+.
 
-### Verified output
+### How to run
 
 ```bash
-# Run in two terminals
 python3 main.py
-curl -X POST http://localhost:8000/episodes/start && sleep 5 && curl -X POST http://localhost:8000/episodes/stop
 ```
 
+Open `http://localhost:8000/docs` in your browser. All endpoints are interactive there.
+
+Or use curl in a second terminal:
+
+```bash
+curl -X POST http://localhost:8000/episodes/start
+sleep 5
+curl -X POST http://localhost:8000/episodes/stop
+curl http://localhost:8000/episodes
+```
+
+### Where to see the results
+
+**API response** — the `/episodes/stop` call returns immediately with episode stats:
 ```json
-{"id": 0, "duration_s": 28.91, "joint_states": 6249,
- "frame_counts": {"wrist_left": 870, "wrist_right": 870, "ceiling": 870, "head": 870}}
+{
+  "id": 0,
+  "duration_s": 28.91,
+  "joint_states": 6249,
+  "frame_counts": {"wrist_left": 870, "wrist_right": 870, "ceiling": 870, "head": 870}
+}
 ```
 
-Recorded files land in `data/episodes/0/` — JPEG frames visible in VSCode file explorer, parquet readable via pandas. Interactive API docs at `http://localhost:8000/docs`.
+**Files on disk** — in VSCode file explorer, open the `data/` folder:
+- Click any `.jpeg` file to preview a camera frame
+- Run `python3 -c "import pandas as pd; print(pd.read_parquet('data/episodes/0/obs/state.parquet').head())"` to inspect joint states
+
+**Terminal** — shows write progress:
+```
+[Recorder] Started episode 0
+[Recorder] Writing parquet for episode 0...
+[Recorder] Episode 0 done — 6249 joint states, 28.91s
+```
+
+### Verified output
+
+```
+POST /episodes/start → {"recording": true, "episode_id": 0}
+POST /episodes/stop  → {"id": 0, "duration_s": 28.91, "joint_states": 6249,
+                        "frame_counts": {"wrist_left": 870, "wrist_right": 870,
+                        "ceiling": 870, "head": 870}}
+GET  /episodes       → same as above, queryable anytime
+```
+
 
 ---
 
