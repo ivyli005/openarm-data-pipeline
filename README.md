@@ -3,6 +3,27 @@
 Take-home project for DeepAware AI / Robotics Center of Silicon Valley.
 
 ---
+## Quick Start
+
+**Requirements:** Ubuntu 22.04, Python 3.10+
+
+```bash
+# 1. Set up virtual CAN interfaces
+sudo modprobe vcan
+sudo ip link add dev vcan0 type vcan && sudo ip link set up vcan0
+sudo ip link add dev vcan1 type vcan && sudo ip link set up vcan1
+
+# 2. Install dependencies
+pip3 install python-can fastapi uvicorn pandas pyarrow Pillow pyyaml
+
+# 3. Run
+cd openarm-project
+python3 main.py
+```
+
+Open `http://localhost:8000/docs` in your browser. Use **POST /episodes/start** and **POST /episodes/stop** to record an episode. Recorded data lands in `data/episodes/`.
+
+---
 
 ## Task 1: CAN Interface Setup
 
@@ -223,3 +244,20 @@ GET  /episodes       → same as above, queryable anytime
 ## Task 5: Monitoring Dashboard
 
 *Coming soon*
+
+
+## Given More Time / Real Hardware
+
+**CAN / joint states:**
+- Kernel `SO_TIMESTAMPING` for hardware-level CAN timestamps — `time.time()` is not accurate enough for robot learning datasets
+- C++ CAN reader to hit exact 250Hz — Python threading overhead caps us at ~220Hz
+
+**Cameras:**
+- Replace mock with real drivers: `cv2.VideoCapture` for Arducams, `pyzed` SDK for ZED head camera
+- Hardware GPIO sync trigger — reduces inter-camera jitter from ~5ms to ~0.1ms
+- ZED clock offset correction at startup to align device-internal clock with host wall clock
+
+**Storage / API:**
+- Stream `.tar.gz` download directly from disk — currently builds full archive in memory first
+- Episode `success` flag update endpoint so operators can mark episodes good/bad after review
+- Convert to LeRobot v2.1 format via `Dataset.write(format="lerobot_v2.1")` for direct ACT policy training and upload to Hugging Face
